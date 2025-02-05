@@ -59,9 +59,9 @@ D2D1_RECT_F b1Rect{ 20.0f, 0, scr_width / 3 - 50.0f, 50.0f };
 D2D1_RECT_F b2Rect{ scr_width / 3 + 20.0f, 0, scr_width * 2/ 3 - 50.0f, 50.0f };
 D2D1_RECT_F b3Rect{ scr_width * 2 / 3 + 20.0f, 0, scr_width - 50.0f, 50.0f };
 
-D2D1_RECT_F b1TextRect{ 30.0f, 5.0f, scr_width / 3 - 50.0f, 50.0f };
-D2D1_RECT_F b2TextRect{ scr_width / 3 + 30.0f, 5.0f, scr_width * 2 / 3 - 50.0f, 50.0f };
-D2D1_RECT_F b3TextRect{ scr_width * 2 / 3 + 30.0f, 5.0f, scr_width - 50.0f, 50.0f };
+D2D1_RECT_F b1TextRect{ 40.0f, 5.0f, scr_width / 3 - 50.0f, 50.0f };
+D2D1_RECT_F b2TextRect{ scr_width / 3 + 50.0f, 5.0f, scr_width * 2 / 3 - 50.0f, 50.0f };
+D2D1_RECT_F b3TextRect{ scr_width * 2 / 3 + 40.0f, 5.0f, scr_width - 50.0f, 50.0f };
 
 bool pause = false;
 bool in_client = true;
@@ -80,6 +80,7 @@ int enemies_killed = 0;
 
 int intro_frame = 0;
 int field_frame = 0;
+int field_delay = 3;
 
 wchar_t current_player[16]{ L"ONE HUNGRY FISH" };
 
@@ -310,7 +311,7 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
             AppendMenu(bStore, MF_STRING, mSave, L"Запази игра");
             AppendMenu(bStore, MF_STRING, mLoad, L"Зареди игра");
             AppendMenu(bStore, MF_SEPARATOR, NULL, NULL);
-            AppendMenu(bStore, MF_STRING, mHoF, L"Залана славата");
+            AppendMenu(bStore, MF_STRING, mHoF, L"Зала на славата");
 
             SetMenu(hwnd, bBar);
             InitGame();
@@ -1108,7 +1109,7 @@ void CreateResources()
 
     if (Draw && bigText && hgltBrush)
     {
-        for (int i = 0; i < 100; ++i)
+        for (int i = 0; i < 200; ++i)
         {
             Draw->BeginDraw();
             Draw->DrawBitmap(bmpIntro[intro_frame], D2D1::RectF(0, 0, scr_width, scr_height));
@@ -1203,9 +1204,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             else Draw->DrawTextW(L"ПОМОЩ ЗА ИГРАТА", 16, nrmText, b3TextRect, hgltBrush);
         }
         Draw->DrawBitmap(bmpField[field_frame], D2D1::RectF(0, 50.0f, scr_width, scr_height));
-        ++field_frame;
-        if (field_frame > 74)field_frame = 0;
-        
+        --field_delay;
+        if (field_delay < 0)
+        {
+            field_delay = 3;
+            ++field_frame;
+            if (field_frame > 74)field_frame = 0;
+        }
         
         
         
