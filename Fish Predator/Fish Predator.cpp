@@ -138,6 +138,10 @@ ID2D1Bitmap* bmpFish9R[8]{ nullptr };
 ////////////////////////////////////////////////
 
 dll::Object Hero{ nullptr };
+float hero_targ_x = 0;
+float hero_targ_y = 0;
+bool hero_moving = false;
+
 std::vector<dll::Object> vAssets;
 
 
@@ -258,6 +262,8 @@ void InitGame()
 
     ClearMem(&Hero);
     Hero = dll::ObjectFactory(hero, 100.0f, (float)(RandMachine(60, (int)(ground - 75.0f))));
+    hero_moving = false;
+
 
     if (!vAssets.empty())
         for (int i = 0; i < vAssets.size(); ++i)ClearMem(&vAssets[i]);
@@ -460,8 +466,18 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
         }
         break;
 
+    case WM_LBUTTONDOWN:
+        if (HIWORD(lParam) < 50)
+        {
 
-
+        }
+        else
+        {
+            hero_targ_x = (float)(LOWORD(lParam));
+            hero_targ_y = (float)(HIWORD(lParam));
+            hero_moving = true;
+        }
+        break;
 
 
 
@@ -1187,6 +1203,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
         ////////////////////////////////
 
+        //HERO ************************
+        
+        if (Hero)
+        {
+            if (hero_moving)
+            {
+                if (!Hero->Move((float)(level), hero_targ_x, hero_targ_y)) hero_moving = false;
+            }
+        }
+        
+        
         // ASSETS **********************
 
         if (vAssets.size() < 10)
@@ -1348,6 +1375,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 else if (Hero->dir == dirs::left)
                     Draw->DrawBitmap(bmpSmallHeroL[hero_frame], Resizer(bmpSmallHeroL[hero_frame], Hero->start.x, Hero->start.y));
             }
+
+            wchar_t strenght_txt[5] = { 0 };
+            int size = 0;
+
+            wsprintf(strenght_txt, L"%d", Hero->strenght);
+            for (int i = 0; i < 5; ++i)
+            {
+                if (strenght_txt[i] != '\0')++size;
+                else break;
+            }
+            if (fishText && hgltBrush)
+                Draw->DrawTextW(strenght_txt, size, fishText, D2D1::RectF(Hero->start.x + 20.0f, Hero->end.y + 5.0f,
+                    Hero->start.x + 85.0f, Hero->end.y + 30.0f), hgltBrush);
         }
 
         
