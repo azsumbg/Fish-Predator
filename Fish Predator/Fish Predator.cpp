@@ -143,7 +143,7 @@ float hero_targ_y = 0;
 bool hero_moving = false;
 
 std::vector<dll::Object> vAssets;
-
+std::vector<dll::Object> vEvils;
 
 
 
@@ -269,6 +269,9 @@ void InitGame()
         for (int i = 0; i < vAssets.size(); ++i)ClearMem(&vAssets[i]);
     vAssets.clear();
 
+    if (!vEvils.empty())
+        for (int i = 0; i < vEvils.size(); ++i)ClearMem(&vEvils[i]);
+    vEvils.clear();
 
 }
 
@@ -1203,7 +1206,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
         ////////////////////////////////
 
-        //HERO ************************
+        //HERO & EVILS ************************
         
         if (Hero)
         {
@@ -1213,10 +1216,180 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             }
         }
         
+        if (vEvils.size() <= 5 + level && RandMachine(0, 5) == 2)
+        {
+            int evil_type = RandMachine(0, 8);
+            int evil_dir = RandMachine(0, 1);
+
+            switch (evil_type)
+            {
+            case 0:
+                if (evil_dir == 0)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish1, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::left;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                else if (evil_dir == 1)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish1, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::right;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                break;
+
+            case 1:
+                if (evil_dir == 0)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish2, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::left;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                else if (evil_dir == 1)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish2, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::right;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                break;
+
+            case 2:
+                if (evil_dir == 0)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish3, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::left;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                else if (evil_dir == 1)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish3, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::right;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                break;
+
+            case 3:
+                if (evil_dir == 0)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish4, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::left;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                else if (evil_dir == 1)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish4, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::right;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                break;
+
+            case 4:
+                if (evil_dir == 0)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish5, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::left;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                else if (evil_dir == 1)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish5, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::right;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                break;
+
+            case 5:
+                if (evil_dir == 0)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish6, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::left;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                else if (evil_dir == 1)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish6, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::right;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                break;
+
+            case 6:
+                if (evil_dir == 0)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish7, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::left;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                else if (evil_dir == 1)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish7, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::right;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                break;
+
+            case 7:
+                if (evil_dir == 0)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish8, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::left;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                else if (evil_dir == 1)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish8, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::right;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                break;
+
+            case 8:
+                if (evil_dir == 0)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish9, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::left;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                else if (evil_dir == 1)
+                {
+                    vEvils.push_back(dll::ObjectFactory(fish9, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.back()->dir = dirs::right;
+                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    break;
+                }
+                break;
+            }
+        }
+
+        if (!vEvils.empty() && Hero)
+        {
+            for (std::vector<dll::Object>::iterator evil = vEvils.begin(); evil < vEvils.end(); ++evil)
+            {
+                FPOINT going_to = (*evil)->AINextMove(FPOINT(Hero->start.x, Hero->start.y));
+                (*evil)->Move((float)(level), going_to.x, going_to.y);
+            }
+        }
         
         // ASSETS **********************
 
-        if (vAssets.size() < 10)
+        if (vAssets.size() < 10 && RandMachine(0, 10) == 5)
         {
             int chance = RandMachine(0, 3);
             int rand_dir = RandMachine(0, 3);
@@ -1313,6 +1486,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 
 
+
+
+
+
+
+        ////////////////////////////////////////
         // DRAW THINGS *************************
 
         Draw->BeginDraw();
@@ -1390,9 +1569,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                     Hero->start.x + 85.0f, Hero->end.y + 30.0f), hgltBrush);
         }
 
-        
-
-
         // DRAW ASSETS ************************
 
         if (!vAssets.empty())
@@ -1426,6 +1602,114 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             }
         }
 
+        ///////////////////////////////////////
+
+        // DRAW EVILS *************************
+        
+        if (!vEvils.empty())
+        {
+            for (std::vector<dll::Object>::iterator evil = vEvils.begin(); evil < vEvils.end(); ++evil)
+            {
+                int evil_frame = (*evil)->GetFrame();
+
+                switch ((*evil)->GetType())
+                {
+                case fish1:
+                    if ((*evil)->dir == dirs::left)
+                        Draw->DrawBitmap(bmpFish1L[evil_frame], Resizer(bmpFish1L[evil_frame], (*evil)->start.x, 
+                            (*evil)->start.y));
+                    else
+                        Draw->DrawBitmap(bmpFish1R[evil_frame], Resizer(bmpFish1R[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    break;
+
+                case fish2:
+                    if ((*evil)->dir == dirs::left)
+                        Draw->DrawBitmap(bmpFish2L[evil_frame], Resizer(bmpFish2L[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    else
+                        Draw->DrawBitmap(bmpFish2R[evil_frame], Resizer(bmpFish2R[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    break;
+
+                case fish3:
+                    if ((*evil)->dir == dirs::left)
+                        Draw->DrawBitmap(bmpFish3L[evil_frame], Resizer(bmpFish3L[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    else
+                        Draw->DrawBitmap(bmpFish3R[evil_frame], Resizer(bmpFish3R[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    break;
+
+                case fish4:
+                    if ((*evil)->dir == dirs::left)
+                        Draw->DrawBitmap(bmpFish4L[evil_frame], Resizer(bmpFish4L[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    else
+                        Draw->DrawBitmap(bmpFish4R[evil_frame], Resizer(bmpFish4R[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    break;
+
+                case fish5:
+                    if ((*evil)->dir == dirs::left)
+                        Draw->DrawBitmap(bmpFish5L[evil_frame], Resizer(bmpFish5L[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    else
+                        Draw->DrawBitmap(bmpFish5R[evil_frame], Resizer(bmpFish5R[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    break;
+
+                case fish6:
+                    if ((*evil)->dir == dirs::left)
+                        Draw->DrawBitmap(bmpFish6L[evil_frame], Resizer(bmpFish6L[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    else
+                        Draw->DrawBitmap(bmpFish6R[evil_frame], Resizer(bmpFish6R[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    break;
+
+                case fish7:
+                    if ((*evil)->dir == dirs::left)
+                        Draw->DrawBitmap(bmpFish7L[evil_frame], Resizer(bmpFish7L[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    else
+                        Draw->DrawBitmap(bmpFish7R[evil_frame], Resizer(bmpFish7R[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    break;
+
+                case fish8:
+                    if ((*evil)->dir == dirs::left)
+                        Draw->DrawBitmap(bmpFish8L[evil_frame], Resizer(bmpFish8L[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    else
+                        Draw->DrawBitmap(bmpFish8R[evil_frame], Resizer(bmpFish8R[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    break;
+
+                case fish9:
+                    if ((*evil)->dir == dirs::left)
+                        Draw->DrawBitmap(bmpFish9L[evil_frame], Resizer(bmpFish9L[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    else
+                        Draw->DrawBitmap(bmpFish9R[evil_frame], Resizer(bmpFish9R[evil_frame], (*evil)->start.x,
+                            (*evil)->start.y));
+                    break;
+                }
+
+                wchar_t strenght_txt[5] = { 0 };
+                int size = 0;
+
+                wsprintf(strenght_txt, L"%d", (*evil)->strenght);
+                for (int i = 0; i < 5; ++i)
+                {
+                    if (strenght_txt[i] != '\0')++size;
+                    else break;
+                }
+                if (fishText && hgltBrush)
+                    Draw->DrawTextW(strenght_txt, size, fishText, D2D1::RectF((*evil)->start.x + 20.0f, (*evil)->end.y + 5.0f,
+                        (*evil)->start.x + 85.0f, (*evil)->end.y + 30.0f), hgltBrush);
+            }
+        }
         
         ////////////////////////////////////////
         
