@@ -137,6 +137,15 @@ ID2D1Bitmap* bmpFish9L[8]{ nullptr };
 ID2D1Bitmap* bmpFish9R[8]{ nullptr };
 ////////////////////////////////////////////////
 
+dll::Object Hero{ nullptr };
+std::vector<dll::Object> vAssets;
+
+
+
+
+
+
+////////////////////////////////////////////////
 template<typename T>concept HasRelease = requires (T check)
 {
     check.Release();
@@ -247,9 +256,12 @@ void InitGame()
     secs = 180;
     enemies_killed = 0;
 
+    ClearMem(&Hero);
+    Hero = dll::ObjectFactory(hero, 100.0f, (float)(RandMachine(60, (int)(ground - 75.0f))));
 
-
-
+    if (!vAssets.empty())
+        for (int i = 0; i < vAssets.size(); ++i)ClearMem(&vAssets[i]);
+    vAssets.clear();
 
 
 }
@@ -1109,7 +1121,7 @@ void CreateResources()
 
     if (Draw && bigText && hgltBrush)
     {
-        for (int i = 0; i < 200; ++i)
+        for (int i = 0; i < 150; ++i)
         {
             Draw->BeginDraw();
             Draw->DrawBitmap(bmpIntro[intro_frame], D2D1::RectF(0, 0, scr_width, scr_height));
@@ -1118,7 +1130,7 @@ void CreateResources()
 
             if (RandMachine(0, 6) == 2)
             {
-                Draw->DrawTextW(L"ГЛАДЕН ХИЩНИК !\n\n      dev. Daniel !", 37, bigText, D2D1::RectF(100.0f, 80.0f, scr_width,
+                Draw->DrawTextW(L"ГЛАДЕН ХИЩНИК !\n\n      dev. Daniel !", 37, bigText, D2D1::RectF(100.0f, 200.0f, scr_width,
                     scr_height), hgltBrush);
                 Draw->EndDraw();
                 mciSendString(L"play .\\res\\snd\\buzz.wav", NULL, NULL, NULL);
@@ -1129,7 +1141,7 @@ void CreateResources()
 
         Draw->BeginDraw();
         Draw->DrawBitmap(bmpIntro[intro_frame], D2D1::RectF(0, 0, scr_width, scr_height));
-        Draw->DrawTextW(L"ГЛАДЕН ХИЩНИК !\n\n      dev. Daniel !", 37, bigText, D2D1::RectF(100.0f, 80.0f, scr_width,
+        Draw->DrawTextW(L"ГЛАДЕН ХИЩНИК !\n\n      dev. Daniel !", 37, bigText, D2D1::RectF(100.0f, 200.0f, scr_width,
             scr_height), hgltBrush);
         Draw->EndDraw();
         PlaySound(L".\\res\\snd\\boom.wav", NULL, SND_SYNC);
@@ -1167,7 +1179,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             if (show_help) continue;
             Draw->BeginDraw();
             Draw->DrawBitmap(bmpIntro[intro_frame], D2D1::RectF(0, 0, scr_width, scr_height));
-            Draw->DrawTextW(L"ПАУЗА !", 6, bigText, D2D1::RectF(scr_width / 2 - 100.0f, scr_height / 2 - 80.0f, scr_width,
+            Draw->DrawTextW(L"ПАУЗА", 6, bigText, D2D1::RectF(scr_width / 2 - 150.0f, scr_height / 2 - 80.0f, scr_width,
                 scr_height), hgltBrush);
             Draw->EndDraw();
             continue;
@@ -1175,10 +1187,102 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
         ////////////////////////////////
 
+        // ASSETS **********************
 
+        if (vAssets.size() < 10)
+        {
+            int chance = RandMachine(0, 3);
+            int rand_dir = RandMachine(0, 3);
 
+            switch (chance)
+            {
+            case 0:
+                vAssets.push_back(dll::ObjectFactory(bubbles, (float)(RandMachine(100, (int)(scr_width - 100))),
+                    ground - 70.0f));
+                vAssets.back()->dir = dirs::up;
+                break;
 
+            case 1:
+                if (rand_dir == 0 || rand_dir == 2)
+                {
+                    vAssets.push_back(dll::ObjectFactory(grass, scr_width, ground - 157.0f));
+                    vAssets.back()->dir = dirs::left;
+                }
+                else
+                {
+                    vAssets.push_back(dll::ObjectFactory(grass, 0, ground - 157.0f));
+                    vAssets.back()->dir = dirs::right;
+                }
+                break;
 
+            case 2:
+                if (rand_dir == 0)
+                {
+                    vAssets.push_back(dll::ObjectFactory(jelly1, -52.0f, (float)(RandMachine(50, 650))));
+                    vAssets.back()->dir = dirs::right;
+                    break;
+                }
+                else if (rand_dir == 1)
+                {
+                    vAssets.push_back(dll::ObjectFactory(jelly1, scr_width + 52.0f, (float)(RandMachine(50, 650))));
+                    vAssets.back()->dir = dirs::left;
+                    break;
+                }
+                else if (rand_dir == 2)
+                {
+                    vAssets.push_back(dll::ObjectFactory(jelly1, (float)(RandMachine(150, 900)), sky));
+                    vAssets.back()->dir = dirs::down;
+                    break;
+                }
+                else if (rand_dir == 3)
+                {
+                    vAssets.push_back(dll::ObjectFactory(jelly1, (float)(RandMachine(150, 900)), ground));
+                    vAssets.back()->dir = dirs::up;
+                    break;
+                }
+                break;
+
+            case 3:
+                if (rand_dir == 0)
+                {
+                    vAssets.push_back(dll::ObjectFactory(jelly2, -70.0f, (float)(RandMachine(50, 650))));
+                    vAssets.back()->dir = dirs::right;
+                    break;
+                }
+                else if (rand_dir == 1)
+                {
+                    vAssets.push_back(dll::ObjectFactory(jelly2, scr_width + 70.0f, (float)(RandMachine(50, 650))));
+                    vAssets.back()->dir = dirs::left;
+                    break;
+                }
+                else if (rand_dir == 2)
+                {
+                    vAssets.push_back(dll::ObjectFactory(jelly2, (float)(RandMachine(150, 900)), sky));
+                    vAssets.back()->dir = dirs::down;
+                    break;
+                }
+                else if (rand_dir == 3)
+                {
+                    vAssets.push_back(dll::ObjectFactory(jelly2, (float)(RandMachine(150, 900)), ground));
+                    vAssets.back()->dir = dirs::up;
+                    break;
+                }
+                break;
+            }
+        }
+
+        if (!vAssets.empty())
+        {
+            for (std::vector<dll::Object>::iterator asset = vAssets.begin(); asset < vAssets.end(); asset++)
+            {
+                if (!(*asset)->Move((float)(level)))
+                {
+                    (*asset)->Release();
+                    vAssets.erase(asset);
+                    break;
+                }
+            }
+        }
 
 
 
@@ -1211,9 +1315,77 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             ++field_frame;
             if (field_frame > 74)field_frame = 0;
         }
+        ////////////////////////////////////////
+
+        // DRAW HERO **************************
+
+        if (Hero)
+        {
+            if (Hero->strenght > 150)
+            {
+                int hero_frame = Hero->GetFrame();
+
+                if (Hero->dir == dirs::right)
+                    Draw->DrawBitmap(bmpBigHeroR[hero_frame], Resizer(bmpBigHeroR[hero_frame], Hero->start.x, Hero->start.y));
+                else if (Hero->dir == dirs::left)
+                    Draw->DrawBitmap(bmpBigHeroL[hero_frame], Resizer(bmpBigHeroL[hero_frame], Hero->start.x, Hero->start.y));
+            }
+            else if (Hero->strenght > 75)
+            {
+                int hero_frame = Hero->GetFrame();
+
+                if (Hero->dir == dirs::right)
+                    Draw->DrawBitmap(bmpMidHeroR[hero_frame], Resizer(bmpMidHeroR[hero_frame], Hero->start.x, Hero->start.y));
+                else if (Hero->dir == dirs::left)
+                    Draw->DrawBitmap(bmpMidHeroL[hero_frame], Resizer(bmpMidHeroL[hero_frame], Hero->start.x, Hero->start.y));
+            }
+            else
+            {
+                int hero_frame = Hero->GetFrame();
+
+                if (Hero->dir == dirs::right)
+                    Draw->DrawBitmap(bmpSmallHeroR[hero_frame], Resizer(bmpSmallHeroR[hero_frame], Hero->start.x, Hero->start.y));
+                else if (Hero->dir == dirs::left)
+                    Draw->DrawBitmap(bmpSmallHeroL[hero_frame], Resizer(bmpSmallHeroL[hero_frame], Hero->start.x, Hero->start.y));
+            }
+        }
+
         
-        
-        
+
+
+        // DRAW ASSETS ************************
+
+        if (!vAssets.empty())
+        {
+            for (std::vector<dll::Object>::iterator asset = vAssets.begin(); asset < vAssets.end(); ++asset)
+            {
+                int asset_frame = (*asset)->GetFrame();
+
+                switch ((*asset)->GetType())
+                {
+                case bubbles:
+                    Draw->DrawBitmap(bmpBubbles[asset_frame], Resizer(bmpBubbles[asset_frame], (*asset)->start.x,
+                        (*asset)->start.y));
+                    break;
+
+                case grass:
+                    Draw->DrawBitmap(bmpGrass[asset_frame], Resizer(bmpGrass[asset_frame], (*asset)->start.x,
+                        (*asset)->start.y));
+                    break;
+
+                case jelly1:
+                    Draw->DrawBitmap(bmpJelly1[asset_frame], Resizer(bmpJelly1[asset_frame], (*asset)->start.x,
+                        (*asset)->start.y));
+                    break;
+
+                case jelly2:
+                    Draw->DrawBitmap(bmpJelly2[asset_frame], Resizer(bmpJelly2[asset_frame], (*asset)->start.x,
+                        (*asset)->start.y));
+                    break;
+                }
+            }
+        }
+
         
         ////////////////////////////////////////
         
