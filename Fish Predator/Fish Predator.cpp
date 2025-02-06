@@ -288,7 +288,6 @@ void LevelUp()
 {
     Draw->EndDraw();
 
-    
     int bonus = 0;
     int txt_size = 0;
 
@@ -311,7 +310,7 @@ void LevelUp()
             scr_width, scr_height), hgltBrush);
         if (sound)mciSendString(L"play .\\res\\snd\\click.wav", NULL, NULL, NULL);
         Draw->EndDraw();
-        Sleep(80);
+        Sleep(40);
         
         ++bonus;
     }
@@ -565,6 +564,36 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
     case WM_LBUTTONDOWN:
         if (HIWORD(lParam) < 50)
         {
+            if (LOWORD(lParam) >= b1Rect.left && LOWORD(lParam) <= b1Rect.right)
+            {
+                if (sound)mciSendString(L"play .\\res\\snd\\select.wav", NULL, NULL, NULL);
+                if (DialogBox(bIns, MAKEINTRESOURCE(IDD_PLAYER), hwnd, DlgProc) == IDOK)name_set = true;
+                break;
+            }
+            if (LOWORD(lParam) >= b2Rect.left && LOWORD(lParam) <= b2Rect.right)
+            {
+                if (name_set)
+                {
+                    mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+                    break;
+                }
+                
+                mciSendString(L"play .\\res\\snd\\select.wav", NULL, NULL, NULL);
+                
+                if (sound)
+                {
+                    sound = false;
+                    PlaySound(NULL, NULL, NULL);
+                    break;
+                }
+                else
+                {
+                    sound = true;
+                    PlaySound(snd_file, NULL, SND_ASYNC | SND_LOOP);
+                    break;
+                }
+            }
+
 
         }
         else
