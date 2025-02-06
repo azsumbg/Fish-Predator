@@ -104,6 +104,7 @@ IDWriteTextFormat* bigText{ nullptr };
 IDWriteTextFormat* fishText{ nullptr };
 
 ID2D1Bitmap* bmpRIP{ nullptr };
+ID2D1Bitmap* bmpFood{ nullptr };
 ID2D1Bitmap* bmpIntro[14]{ nullptr };
 ID2D1Bitmap* bmpField[75]{ nullptr };
 ID2D1Bitmap* bmpBubbles[40]{ nullptr };
@@ -149,6 +150,7 @@ float RIP_y = 0;
 std::vector<dll::Object> vAssets;
 std::vector<dll::Object> vEvils;
 
+dll::PROTON* Food = nullptr;
 
 ////////////////////////////////////////////////
 template<typename T>concept HasRelease = requires (T check)
@@ -192,6 +194,8 @@ void ClearResources()
     if (!ClearMem(&fishText))ErrLog(L"Error releasing fishText !");
 
     if (!ClearMem(&bmpRIP))ErrLog(L"Error releasing bmpRIP !");
+    if (!ClearMem(&bmpFood))ErrLog(L"Error releasing bmpFood !");
+
     for (int i = 0; i < 14; ++i)if (!ClearMem(&bmpIntro[i]))ErrLog(L"Error releasing bmpIntro !");
     for (int i = 0; i < 75; ++i)if (!ClearMem(&bmpField[i]))ErrLog(L"Error releasing bmpField !");
     for (int i = 0; i < 40; ++i)if (!ClearMem(&bmpBubbles[i]))ErrLog(L"Error releasing bmpBubbles !");
@@ -265,6 +269,82 @@ void InitGame()
     ClearMem(&Hero);
     Hero = dll::ObjectFactory(hero, scr_width / 2, (float)(RandMachine(60, (int)(ground - 75.0f))));
     hero_moving = false;
+
+    if (Food)
+    {
+        delete Food;
+        Food = nullptr;
+    }
+
+    if (!vAssets.empty())
+        for (int i = 0; i < vAssets.size(); ++i)ClearMem(&vAssets[i]);
+    vAssets.clear();
+
+    if (!vEvils.empty())
+        for (int i = 0; i < vEvils.size(); ++i)ClearMem(&vEvils[i]);
+    vEvils.clear();
+}
+void LevelUp()
+{
+    Draw->EndDraw();
+
+    
+    int bonus = 0;
+    int txt_size = 0;
+
+    while (bonus <= enemies_killed * 2 * level)
+    {
+        wchar_t bon_txt[25] = L"БОНУС: ";
+        wchar_t add[5] = L"\0";
+        txt_size = 0;
+        wsprintf(add, L"%d", bonus);
+        wcscat_s(bon_txt, add);
+        for (int i = 0; i < 25; ++i)
+        {
+            if (bon_txt[i] != '\0')++txt_size;
+            else break;
+        }
+
+        Draw->BeginDraw();
+        Draw->DrawBitmap(bmpIntro[0], D2D1::RectF(0, 0, scr_width, scr_height));
+        if (bigText && hgltBrush)Draw->DrawTextW(bon_txt, txt_size, bigText, D2D1::RectF(300.0f, scr_height / 2 - 100.0f, 
+            scr_width, scr_height), hgltBrush);
+        if (sound)mciSendString(L"play .\\res\\snd\\click.wav", NULL, NULL, NULL);
+        Draw->EndDraw();
+        Sleep(80);
+        
+        ++bonus;
+    }
+    if (bonus > 0)Sleep(2000);
+    
+    score += bonus;
+
+    Draw->BeginDraw();
+    Draw->DrawBitmap(bmpIntro[0], D2D1::RectF(0, 0, scr_width, scr_height));
+    if (bigText && hgltBrush)Draw->DrawTextW(L"НИВОТО ПРЕМИНАТО !", 19, bigText, D2D1::RectF(200.0f, scr_height / 2 - 100.0f, 
+        scr_width, scr_height), hgltBrush);
+    Draw->EndDraw();
+    if (sound)
+    {
+        PlaySound(NULL, NULL, NULL);
+        PlaySound(L".\\res\\snd\\levelup.wav", NULL, SND_SYNC);
+        PlaySound(snd_file, NULL, SND_ASYNC | SND_LOOP);
+    }
+    else Sleep(2000);
+
+    ++level;
+    secs = 180 + level * 10;
+    enemies_killed = 0;
+    if (Food)
+    {
+        delete Food;
+        Food = nullptr;
+    }
+
+    ClearMem(&Hero);
+    Hero = dll::ObjectFactory(hero, scr_width / 2, (float)(RandMachine(60, (int)(ground - 75.0f))));
+    hero_moving = false;
+    Hero->strenght += level + 1;
 
 
     if (!vAssets.empty())
@@ -357,6 +437,7 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
         if (pause)break;
         secs--;
         mins = secs / 60;
+        if (secs <= 0)LevelUp();
         break;
 
     case WM_PAINT:
@@ -460,8 +541,18 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
             InitGame();
             break;
 
-
-
+        case mLvl:
+            pause = true;
+            if (sound)mciSendString(L"play .\\res\\snd\\exclamation.wav", NULL, NULL, NULL);
+            if (MessageBox(hwnd, L"Ако прескочиш нивото, губиш бонуса !\n\nНаистина ли прескачаш ?",
+                L"Следващо ниво !", MB_YESNO | MB_APPLMODAL | MB_ICONQUESTION) == IDNO)
+            {
+                pause = false;
+                break;
+            }
+            enemies_killed = 0;
+            LevelUp();
+            break;
 
         case mExit:
             SendMessage(hwnd, WM_CLOSE, NULL, NULL);
@@ -593,6 +684,9 @@ void CreateResources()
             }
 
             bmpRIP = Load(L".\\res\\img\\rip.png", Draw);
+            bmpFood = Load(L".\\res\\img\\field\\food.png", Draw);
+
+            
             for (int i = 0; i < 14; ++i)
             {
                 wchar_t name[150] = L".\\res\\img\\field\\intro\\";
@@ -1127,11 +1221,11 @@ void CreateResources()
             hr = iWriteFactory->CreateTextFormat(L"SEGOE PRINT", NULL, DWRITE_FONT_WEIGHT_ULTRA_BLACK,
                 DWRITE_FONT_STYLE_OBLIQUE, DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"", &nrmText);
             hr = iWriteFactory->CreateTextFormat(L"SEGOE PRINT", NULL, DWRITE_FONT_WEIGHT_ULTRA_BLACK,
-                DWRITE_FONT_STYLE_OBLIQUE, DWRITE_FONT_STRETCH_NORMAL, 36.0f, L"", &midText);
+                DWRITE_FONT_STYLE_OBLIQUE, DWRITE_FONT_STRETCH_NORMAL, 20.0f, L"", &midText);
             hr = iWriteFactory->CreateTextFormat(L"SEGOE PRINT", NULL, DWRITE_FONT_WEIGHT_ULTRA_BLACK,
                 DWRITE_FONT_STYLE_OBLIQUE, DWRITE_FONT_STRETCH_NORMAL, 72.0f, L"", &bigText);
             hr = iWriteFactory->CreateTextFormat(L"SEGOE PRINT", NULL, DWRITE_FONT_WEIGHT_ULTRA_BLACK,
-                DWRITE_FONT_STYLE_OBLIQUE, DWRITE_FONT_STRETCH_NORMAL, 14.0f, L"", &fishText);
+                DWRITE_FONT_STYLE_OBLIQUE, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"", &fishText);
 
             if (hr != S_OK)
             {
@@ -1173,7 +1267,6 @@ void CreateResources()
 }
 
 ////////////////////////////////////////////////
-
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
@@ -1405,6 +1498,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                         (*evil)->Release();
                         vEvils.erase(evil);
                         ++enemies_killed;
+                        score += level;
                         break;
                     }
                     else
@@ -1516,6 +1610,31 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             }
         }
 
+        if (!Food && RandMachine(0, 1000) == 666)
+        {
+            Food = new dll::PROTON((float)(RandMachine(70, 900)), sky, 70.0f, 71.0f);
+        }
+
+        if (Food && Hero)
+        {
+            Food->start.y += level;
+            Food->SetEdges();
+            
+            float dist = Hero->Distance(FPOINT(Food->start.x + 35.0f, Food->start.y + 30.0f), Hero->center);
+            if (dist <= Hero->GetWidth() / 2 + 35.0f)
+            {
+                if (sound)mciSendString(L"play .\\res\\snd\\eaten.wav", NULL, NULL, NULL);
+                Hero->strenght += level;
+                delete Food;
+                Food = nullptr;
+            }
+            else if (Food->end.y > ground)
+            {
+                delete Food;
+                Food = nullptr;
+            }
+        }
+
         ////////////////////////////////
 
         ////////////////////////////////////////
@@ -1548,6 +1667,40 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             ++field_frame;
             if (field_frame > 74)field_frame = 0;
         }
+
+        wchar_t stat_txt[150] = L"ХИЩНИК: ";
+        wchar_t stat_add[5] = L"\0";
+        int stat_size = 0;
+
+        wcscat_s(stat_txt, current_player);
+        
+        wcscat_s(stat_txt, L", НИВО: ");
+        wsprintf(stat_add, L"%d", level);
+        wcscat_s(stat_txt, stat_add);
+
+        wcscat_s(stat_txt, L", ТОЧКИ: ");
+        wsprintf(stat_add, L"%d", score);
+        wcscat_s(stat_txt, stat_add);
+
+        wcscat_s(stat_txt, L", ВРЕМЕ: ");
+        if (mins < 10)wcscat_s(stat_txt, L"0");
+        wsprintf(stat_add, L"%d", mins);
+        wcscat_s(stat_txt, stat_add);
+        wcscat_s(stat_txt, L" : ");
+        if (secs - mins * 60 < 10)wcscat_s(stat_txt, L"0");
+        wsprintf(stat_add, L"%d", secs - mins * 60);
+        wcscat_s(stat_txt, stat_add);
+
+        for (int i = 0; i < 150; i++)
+        {
+            if (stat_txt[i] != '\0')stat_size++;
+            else break;
+        }
+
+        if (midText && hgltBrush)
+            Draw->DrawTextW(stat_txt, stat_size, midText, D2D1::RectF(10.0f, ground + 5.0f, scr_width, scr_height), hgltBrush);
+
+
         ////////////////////////////////////////
 
         // HERO KILLED ************************
@@ -1564,7 +1717,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             else Sleep(3000);
             GameOver();
         }
-
 
         // DRAW HERO **************************
 
@@ -1644,6 +1796,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 }
             }
         }
+
+        if (Food)Draw->DrawBitmap(bmpFood, D2D1::RectF(Food->start.x, Food->start.y, Food->end.x, Food->end.y));
 
         ///////////////////////////////////////
 
