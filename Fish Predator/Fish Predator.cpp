@@ -103,6 +103,7 @@ IDWriteTextFormat* midText{ nullptr };
 IDWriteTextFormat* bigText{ nullptr };
 IDWriteTextFormat* fishText{ nullptr };
 
+ID2D1Bitmap* bmpRIP{ nullptr };
 ID2D1Bitmap* bmpIntro[14]{ nullptr };
 ID2D1Bitmap* bmpField[75]{ nullptr };
 ID2D1Bitmap* bmpBubbles[40]{ nullptr };
@@ -141,12 +142,12 @@ dll::Object Hero{ nullptr };
 float hero_targ_x = 0;
 float hero_targ_y = 0;
 bool hero_moving = false;
+bool hero_killed = false;
+float RIP_x = 0;
+float RIP_y = 0;
 
 std::vector<dll::Object> vAssets;
 std::vector<dll::Object> vEvils;
-
-
-
 
 
 ////////////////////////////////////////////////
@@ -190,6 +191,7 @@ void ClearResources()
     if (!ClearMem(&bigText))ErrLog(L"Error releasing bigText !");
     if (!ClearMem(&fishText))ErrLog(L"Error releasing fishText !");
 
+    if (!ClearMem(&bmpRIP))ErrLog(L"Error releasing bmpRIP !");
     for (int i = 0; i < 14; ++i)if (!ClearMem(&bmpIntro[i]))ErrLog(L"Error releasing bmpIntro !");
     for (int i = 0; i < 75; ++i)if (!ClearMem(&bmpField[i]))ErrLog(L"Error releasing bmpField !");
     for (int i = 0; i < 40; ++i)if (!ClearMem(&bmpBubbles[i]))ErrLog(L"Error releasing bmpBubbles !");
@@ -261,7 +263,7 @@ void InitGame()
     enemies_killed = 0;
 
     ClearMem(&Hero);
-    Hero = dll::ObjectFactory(hero, 100.0f, (float)(RandMachine(60, (int)(ground - 75.0f))));
+    Hero = dll::ObjectFactory(hero, scr_width / 2, (float)(RandMachine(60, (int)(ground - 75.0f))));
     hero_moving = false;
 
 
@@ -590,6 +592,7 @@ void CreateResources()
                 ErrExit(eD2D);
             }
 
+            bmpRIP = Load(L".\\res\\img\\rip.png", Draw);
             for (int i = 0; i < 14; ++i)
             {
                 wchar_t name[150] = L".\\res\\img\\field\\intro\\";
@@ -1184,6 +1187,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     CreateResources();
 
 
+
     while (bMsg.message != WM_QUIT)
     {
         if ((bRet = PeekMessage(&bMsg, bHwnd, NULL, NULL, PM_REMOVE)) != 0)
@@ -1226,14 +1230,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             case 0:
                 if (evil_dir == 0)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish1, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish1, scr_width, (float)(RandMachine(80, (int)(ground-80.0f)))));
                     vEvils.back()->dir = dirs::left;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish1, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish1, 0, (float)(RandMachine(80, (int)(ground-80.0f)))));
                     vEvils.back()->dir = dirs::right;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
@@ -1243,14 +1247,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             case 1:
                 if (evil_dir == 0)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish2, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish2, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish2, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish2, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
@@ -1260,14 +1264,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             case 2:
                 if (evil_dir == 0)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish3, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish3, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish3, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish3, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
@@ -1277,14 +1281,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             case 3:
                 if (evil_dir == 0)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish4, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish4, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish4, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish4, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
@@ -1294,14 +1298,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             case 4:
                 if (evil_dir == 0)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish5, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish5, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish5, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish5, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
@@ -1311,14 +1315,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             case 5:
                 if (evil_dir == 0)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish6, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish6, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish6, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish6, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
@@ -1328,14 +1332,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             case 6:
                 if (evil_dir == 0)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish7, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish7, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish7, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish7, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
@@ -1345,14 +1349,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             case 7:
                 if (evil_dir == 0)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish8, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish8, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish8, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish8, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
@@ -1362,14 +1366,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             case 8:
                 if (evil_dir == 0)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish9, scr_width, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish9, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
-                    vEvils.push_back(dll::ObjectFactory(fish9, 0, (float)(RandMachine(60, (int)(ground)-80.0f))));
+                    vEvils.push_back(dll::ObjectFactory(fish9, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
                     vEvils.back()->strenght += RandMachine(0, level + 3);
                     break;
@@ -1386,7 +1390,35 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 (*evil)->Move((float)(level), going_to.x, going_to.y);
             }
         }
-        
+
+        if (!vEvils.empty() && Hero)
+        {
+            for (std::vector<dll::Object>::iterator evil = vEvils.begin(); evil < vEvils.end(); evil++)
+            {
+                float current_distance = Hero->Distance(Hero->center, (*evil)->center);
+                if (current_distance <= Hero->GetWidth() / 2 + (*evil)->GetWidth() / 2)
+                {
+                    if (Hero->strenght >= (*evil)->strenght)
+                    {
+                        if (sound)mciSendString(L"play .\\res\\snd\\eaten.wav", NULL, NULL, NULL);
+                        Hero->strenght += (*evil)->strenght / 3;
+                        (*evil)->Release();
+                        vEvils.erase(evil);
+                        ++enemies_killed;
+                        break;
+                    }
+                    else
+                    {
+                        RIP_x = Hero->center.x;
+                        RIP_y = Hero->center.y;
+                        hero_killed = true;
+                        ClearMem(&Hero);
+                        break;
+                    }
+                }
+            }
+        }
+
         // ASSETS **********************
 
         if (vAssets.size() < 10 && RandMachine(0, 10) == 5)
@@ -1484,12 +1516,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             }
         }
 
-
-
-
-
-
-
+        ////////////////////////////////
 
         ////////////////////////////////////////
         // DRAW THINGS *************************
@@ -1522,6 +1549,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             if (field_frame > 74)field_frame = 0;
         }
         ////////////////////////////////////////
+
+        // HERO KILLED ************************
+
+        if (hero_killed)
+        {
+            Draw->DrawBitmap(bmpRIP, D2D1::RectF(RIP_x, RIP_y, RIP_x + 80.0f, RIP_y + 94.0f));
+            Draw->EndDraw();
+            if (sound)
+            {
+                PlaySound(NULL, NULL, NULL);
+                PlaySound(L".\\res\\snd\\killed.wav", NULL, SND_SYNC);
+            }
+            else Sleep(3000);
+            GameOver();
+        }
+
 
         // DRAW HERO **************************
 

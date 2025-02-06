@@ -104,7 +104,7 @@ namespace dll
 			bool vert_line = false;
 
 			void SetPathInfo(float _ex, float _ey);
-			float Distance(FPOINT targ_point, FPOINT my_point);
+			
 
 			BASE_OBJECT(uint16_t _what, float _wherex, float _wherey);
 	
@@ -122,6 +122,7 @@ namespace dll
 
 			int GetFrame();
 			uint16_t GetType() const;
+			float Distance(FPOINT targ_point, FPOINT my_point);
 
 			virtual FPOINT AINextMove(FPOINT hero) = 0;
 			virtual bool Move(float gear, float to_where_x = 0, float to_where_y = 0) = 0;
