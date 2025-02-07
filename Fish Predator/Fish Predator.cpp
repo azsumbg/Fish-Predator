@@ -246,13 +246,73 @@ void ErrExit(int what)
     std::remove(tmp_file);
     exit(1);
 }
+BOOL CheckRecord()
+{
+    if (score < 1)return no_record;
 
+    int result = 0;
+    CheckFile(record_file, &result);
+
+    if (result == FILE_NOT_EXIST)
+    {
+        std::wofstream rec(record_file);
+        rec << score << std::endl;
+        for (int i = 0; i < 16; ++i)rec << static_cast<int>(current_player[i]) << std::endl;
+        rec.close();
+        return first_record;
+    }
+    else
+    {
+        std::wifstream check(record_file);
+        check >> result;
+        check.close();
+    }
+
+    if (result < score)
+    {
+        std::wofstream rec(record_file);
+        rec << score << std::endl;
+        for (int i = 0; i < 16; ++i)rec << static_cast<int>(current_player[i]) << std::endl;
+        rec.close();
+        return record;
+    }
+
+    return no_record;
+}
 void GameOver()
 {
     PlaySound(NULL, NULL, NULL);
     KillTimer(bHwnd, bTimer);
 
+    switch (CheckRecord())
+    {
+    case no_record:
+        Draw->BeginDraw();
+        Draw->DrawBitmap(bmpIntro[intro_frame], D2D1::RectF(0, 0, scr_width, scr_height));
+        Draw->DrawTextW(L"ИЗЯДОХА ТЕ !", 13, bigText, D2D1::RectF(200.0f, 300.0f, scr_width, scr_height), hgltBrush);
+        Draw->EndDraw();
+        if (sound)PlaySound(L".\\res\\snd\\loose.wav", NULL, SND_SYNC);
+        else Sleep(3000);
+        break;
 
+    case first_record:
+        Draw->BeginDraw();
+        Draw->DrawBitmap(bmpIntro[intro_frame], D2D1::RectF(0, 0, scr_width, scr_height));
+        Draw->DrawTextW(L"ПЪРВИ РЕКОРД !", 15, bigText, D2D1::RectF(200.0f, 300.0f, scr_width, scr_height), hgltBrush);
+        Draw->EndDraw();
+        if (sound)PlaySound(L".\\res\\snd\\record.wav", NULL, SND_SYNC);
+        else Sleep(3000);
+        break;
+
+    case record:
+        Draw->BeginDraw();
+        Draw->DrawBitmap(bmpIntro[intro_frame], D2D1::RectF(0, 0, scr_width, scr_height));
+        Draw->DrawTextW(L"НОВ СВЕТОВЕН РЕКОРД !", 22, bigText, D2D1::RectF(50.0f, 300.0f, scr_width, scr_height), hgltBrush);
+        Draw->EndDraw();
+        if (sound)PlaySound(L".\\res\\snd\\record.wav", NULL, SND_SYNC);
+        else Sleep(3000);
+        break;
+    }
 
     bMsg.message = WM_QUIT;
     bMsg.wParam = 0;
@@ -603,8 +663,6 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
             hero_moving = true;
         }
         break;
-
-
 
     default: return DefWindowProc(hwnd, ReceivedMsg, wParam, lParam);
     }
@@ -1342,7 +1400,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             }
         }
         
-        if (vEvils.size() <= 5 + level && RandMachine(0, 5) == 2)
+        if (Hero && vEvils.size() <= 5 + level && RandMachine(0, 5) == 2)
         {
             int evil_type = RandMachine(0, 8);
             int evil_dir = RandMachine(0, 1);
@@ -1354,14 +1412,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish1, scr_width, (float)(RandMachine(80, (int)(ground-80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish1, 0, (float)(RandMachine(80, (int)(ground-80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 break;
@@ -1371,14 +1429,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish2, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish2, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 break;
@@ -1388,14 +1446,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish3, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish3, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 break;
@@ -1405,14 +1463,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish4, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish4, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 break;
@@ -1422,14 +1480,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish5, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish5, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 break;
@@ -1439,14 +1497,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish6, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish6, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 break;
@@ -1456,14 +1514,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish7, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish7, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 break;
@@ -1473,14 +1531,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish8, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish8, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 break;
@@ -1490,14 +1548,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish9, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish9, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3);
+                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
                     break;
                 }
                 break;
@@ -1532,6 +1590,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                     }
                     else
                     {
+                        if (Hero->strenght >= 200)score += 200;
+                        else if (Hero->strenght >= 100)score += 100;
                         RIP_x = Hero->center.x;
                         RIP_y = Hero->center.y;
                         hero_killed = true;
@@ -1751,7 +1811,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
         if (Hero)
         {
-            if (Hero->strenght > 150)
+            if (Hero->strenght > 200)
             {
                 int hero_frame = Hero->GetFrame();
 
@@ -1760,7 +1820,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 else if (Hero->dir == dirs::left)
                     Draw->DrawBitmap(bmpBigHeroL[hero_frame], Resizer(bmpBigHeroL[hero_frame], Hero->start.x, Hero->start.y));
             }
-            else if (Hero->strenght > 75)
+            else if (Hero->strenght > 100)
             {
                 int hero_frame = Hero->GetFrame();
 
