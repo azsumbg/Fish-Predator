@@ -370,11 +370,11 @@ void LevelUp()
             scr_width, scr_height), hgltBrush);
         if (sound)mciSendString(L"play .\\res\\snd\\click.wav", NULL, NULL, NULL);
         Draw->EndDraw();
-        Sleep(40);
+        Sleep(20);
         
         ++bonus;
     }
-    if (bonus > 0)Sleep(2000);
+    if (bonus > 0)Sleep(1000);
     
     score += bonus;
 
@@ -413,7 +413,226 @@ void LevelUp()
     if (!vEvils.empty())
         for (int i = 0; i < vEvils.size(); ++i)ClearMem(&vEvils[i]);
     vEvils.clear();
+}
+void HallOfFame()
+{
+    int result = 0;
+    CheckFile(record_file, &result);
+    if (result == FILE_NOT_EXIST)
+    {
+        if (sound)mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+        MessageBox(bHwnd, L"Все още няма рекорд на играта !\n\nПостарай се повече !", L"Липсва файл !",
+            MB_OK | MB_APPLMODAL | MB_ICONEXCLAMATION);
+        return;
+    }
 
+    wchar_t rec_txt[100] = L"ХИЩНИК: ";
+    wchar_t add[5] = L"\0";
+    wchar_t saved_player[16] = L"\0";
+
+    std::wifstream rec(record_file);
+    rec >> result;
+    for (int i = 0; i < 16; ++i)
+    {
+        int letter = 0;
+        rec >> letter;
+        saved_player[i] = static_cast<wchar_t>(letter);
+    }
+    rec.close();
+
+    wsprintf(add, L"%d", result);
+
+    result = 0;
+    wcscat_s(rec_txt, saved_player);
+    wcscat_s(rec_txt, L"\n\nСВЕТОВЕН РЕКОРД: ");
+    wcscat_s(rec_txt, add);
+
+    for (int i = 0; i < 100; ++i)
+    {
+        if (rec_txt[i] != '\0')result++;
+        else break;
+    }
+
+    Draw->BeginDraw();
+    Draw->FillRectangle(D2D1::RectF(0, 0, scr_width, scr_height), inactBrush);
+    Draw->DrawTextW(rec_txt, result, bigText, D2D1::RectF(50.0f, 100.0f, scr_width, scr_height), textBrush);
+    Draw->EndDraw();
+    if (sound)mciSendString(L"play .\\res\\snd\\showrec.wav", NULL, NULL, NULL);
+    Sleep(3500);
+}
+void SaveGame()
+{
+    int result = 0;
+    CheckFile(save_file, &result);
+    if (result == FILE_EXIST)
+    {
+        if (sound)mciSendString(L"play .\\res\\snd\\exclamation.wav", NULL, NULL, NULL);
+        if (MessageBox(bHwnd, L"Съществува записана игра,която ще загубиш !\n\nДа я презапиша ли ?",
+            L"Презапис !", MB_YESNO | MB_APPLMODAL | MB_ICONQUESTION) == IDNO)return;
+    }
+
+    std::wofstream save(save_file);
+
+    save << score << std::endl;
+    save << level << std::endl;
+    save << secs << std::endl;
+    save << enemies_killed << std::endl;
+    save << name_set << std::endl;
+    
+    for (int i = 0; i < 16; ++i)save << static_cast<int>(current_player[i]) << std::endl;
+
+    if(!Food)save << 0 << std::endl;
+    else
+    {
+        save << 1 << std::endl;
+        save << Food->start.x << std::endl;
+        save << Food->start.y << std::endl;
+    }
+
+    save << hero_killed << std::endl;
+    if (Hero)
+    {
+        save << Hero->start.x << std::endl;
+        save << Hero->start.y << std::endl;
+        save << Hero->strenght << std::endl;
+    }
+
+    save << vEvils.size() << std::endl;
+    if (vEvils.size() > 0)
+    {
+        for (int i = 0; i < vEvils.size(); ++i)
+        {
+            save << vEvils[i]->start.x << std::endl;
+            save << vEvils[i]->start.y << std::endl;
+            save << vEvils[i]->strenght << std::endl;
+            save << static_cast<int>(vEvils[i]->dir) << std::endl;
+            save << static_cast<int>(vEvils[i]->GetType()) << std::endl;
+        }
+    }
+    save.close();
+
+    if (sound)mciSendString(L"play .\\res\\snd\\save.wav", NULL, NULL, NULL);
+    Draw->BeginDraw();
+    Draw->DrawBitmap(bmpIntro[0], D2D1::RectF(0, 0, scr_width, scr_height));
+    if (bigText && hgltBrush)Draw->DrawTextW(L"ИГРАТА Е ЗАПАЗЕНА !", 20, bigText, D2D1::RectF(180.0f, scr_height / 2 - 100.0f,
+        scr_width, scr_height), hgltBrush);
+    Draw->EndDraw();
+    
+    Sleep(2000);
+}
+void LoadGame()
+{
+    int result = 0;
+    CheckFile(save_file, &result);
+
+    if (result == FILE_NOT_EXIST)
+    {
+        if (sound)mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+        MessageBox(bHwnd, L"Все още няма записана игра !\n\nПостарай се повече !", L"Липсва файл !",
+            MB_OK | MB_APPLMODAL | MB_ICONEXCLAMATION);
+        return;
+    }
+    else
+    {
+        if (sound)mciSendString(L"play .\\res\\snd\\exclamation.wav", NULL, NULL, NULL);
+        if (MessageBox(bHwnd, L"Ако продължиш, губиш прогреса по тази игра !\n\nДа я презапиша ли ?",
+            L"Презапис !", MB_YESNO | MB_APPLMODAL | MB_ICONQUESTION) == IDNO)return;
+    }
+
+    if (Food)
+    {
+        delete Food;
+        Food = nullptr;
+    }
+
+    ClearMem(&Hero);
+    hero_moving = false;
+    
+    if (!vAssets.empty())
+        for (int i = 0; i < vAssets.size(); ++i)ClearMem(&vAssets[i]);
+    vAssets.clear();
+
+    if (!vEvils.empty())
+        for (int i = 0; i < vEvils.size(); ++i)ClearMem(&vEvils[i]);
+    vEvils.clear();
+
+    //////////////////////////////////////////////////////////////////
+
+    std::wifstream save(save_file);
+
+    save >> score;
+    save >> level;
+    save >> secs;
+    save >> enemies_killed;
+    save >> name_set;
+
+    for (int i = 0; i < 16; ++i)
+    {
+        int letter = 0;
+
+        save >> letter;
+        current_player[i] = static_cast<wchar_t>(letter);
+    }
+
+    save >> result;
+    if (result > 0 )
+    {
+        float s_x = 0;
+        float s_y = 0;
+
+        save >> s_x;
+        save >> s_y;
+
+        Food = new dll::PROTON(s_x, s_y, 70.0f, 71.0f);
+    }
+
+    save >> hero_killed;
+    if (hero_killed)GameOver();
+    else
+    {
+        float s_x = 0;
+        float s_y = 0;
+        int temp_strenght = 0;
+
+        save >> s_x;
+        save >> s_y;
+        save >> temp_strenght;
+        Hero = dll::ObjectFactory(hero, s_x, s_y);
+        Hero->strenght = temp_strenght;
+    }
+
+    save >> result;
+    if (result > 0)
+    {
+        for (int i = 0; i < result; ++i)
+        {
+            float s_x = 0;
+            float s_y = 0;
+            int temp_type = 0;
+            int temp_dir = 0;
+            int temp_strenght = 0;
+
+            save >> s_x;
+            save >> s_y;
+            save >> temp_strenght;
+            save >> temp_dir;
+            save >> temp_type;
+
+            vEvils.push_back(dll::ObjectFactory(static_cast<uint16_t>(temp_type), s_x, s_y));
+            vEvils.back()->dir = static_cast<dirs>(temp_dir);
+            vEvils.back()->strenght = temp_strenght;
+        }
+    }
+    save.close();
+
+    if (sound)mciSendString(L"play .\\res\\snd\\save.wav", NULL, NULL, NULL);
+    Draw->BeginDraw();
+    Draw->DrawBitmap(bmpIntro[0], D2D1::RectF(0, 0, scr_width, scr_height));
+    if (bigText && hgltBrush)Draw->DrawTextW(L"ИГРАТА Е ЗАРЕДЕНА !", 20, bigText, D2D1::RectF(180.0f, scr_height / 2 - 100.0f,
+        scr_width, scr_height), hgltBrush);
+    Draw->EndDraw();
+
+    Sleep(2000);
 }
 
 INT_PTR CALLBACK DlgProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lParam)
@@ -617,7 +836,23 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
             SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             break;
 
+        case mSave:
+            pause = true;
+            SaveGame();
+            pause = false;
+            break;
 
+        case mLoad:
+            pause = true;
+            LoadGame();
+            pause = false;
+            break;
+
+        case mHoF:
+            pause = true;
+            HallOfFame();
+            pause = false;
+            break;
         }
         break;
 
@@ -626,6 +861,11 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
         {
             if (LOWORD(lParam) >= b1Rect.left && LOWORD(lParam) <= b1Rect.right)
             {
+                if (name_set)
+                {
+                    if (sound)mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+                    break;
+                }
                 if (sound)mciSendString(L"play .\\res\\snd\\select.wav", NULL, NULL, NULL);
                 if (DialogBox(bIns, MAKEINTRESOURCE(IDD_PLAYER), hwnd, DlgProc) == IDOK)name_set = true;
                 break;
@@ -1367,7 +1607,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     CreateResources();
 
 
-
     while (bMsg.message != WM_QUIT)
     {
         if ((bRet = PeekMessage(&bMsg, bHwnd, NULL, NULL, PM_REMOVE)) != 0)
@@ -1412,14 +1651,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish1, scr_width, (float)(RandMachine(80, (int)(ground-80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish1, 0, (float)(RandMachine(80, (int)(ground-80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 break;
@@ -1429,14 +1668,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish2, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish2, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 break;
@@ -1446,14 +1685,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish3, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish3, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 break;
@@ -1463,14 +1702,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish4, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish4, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 break;
@@ -1480,14 +1719,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish5, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish5, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 break;
@@ -1497,14 +1736,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish6, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish6, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 break;
@@ -1514,14 +1753,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish7, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish7, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 break;
@@ -1531,14 +1770,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish8, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish8, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 break;
@@ -1548,14 +1787,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 {
                     vEvils.push_back(dll::ObjectFactory(fish9, scr_width, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::left;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 else if (evil_dir == 1)
                 {
                     vEvils.push_back(dll::ObjectFactory(fish9, 0, (float)(RandMachine(80, (int)(ground - 80.0f)))));
                     vEvils.back()->dir = dirs::right;
-                    vEvils.back()->strenght += RandMachine(0, level + 3 + Hero->strenght / 2);
+                    vEvils.back()->strenght += RandMachine(0, level + Hero->strenght);
                     break;
                 }
                 break;
